@@ -1,4 +1,4 @@
-use std::{path::{PathBuf}};
+use std::path::PathBuf;
 
 use serde::{Deserialize, Deserializer};
 
@@ -11,11 +11,11 @@ pub struct RelConf {
 
 #[derive(Deserialize, Debug)]
 pub struct Tool {
-  pub name: String,
-  pub format: Format,
-  pub rootconfig: FilePath,
-  pub inject: Vec<Inject>,
-  pub subconfigs: Vec<Subconfig>,
+    pub name: String,
+    pub format: Format,
+    pub rootconfig: FilePath,
+    pub inject: Vec<Inject>,
+    pub subconfigs: Vec<Subconfig>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -59,7 +59,10 @@ impl<'de> Deserialize<'de> for FilePath {
         let path = PathBuf::from(s);
 
         if !is_file(&path) {
-            return Err(serde::de::Error::custom(format!("Expected a file path or symlink to a file, received {}", path.to_string_lossy())));
+            return Err(serde::de::Error::custom(format!(
+                "Expected a file path or symlink to a file, received {}",
+                path.to_string_lossy()
+            )));
         }
 
         Ok(FilePath(path))
@@ -78,7 +81,9 @@ impl<'de> Deserialize<'de> for DirectoryPath {
         let path = PathBuf::from(s);
 
         if !is_dir(&path) {
-            return Err(serde::de::Error::custom("Expected a directory path or symlink to a directory"));
+            return Err(serde::de::Error::custom(
+                "Expected a directory path or symlink to a directory",
+            ));
         }
 
         Ok(DirectoryPath(path))

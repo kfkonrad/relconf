@@ -1,33 +1,59 @@
+use std::collections::HashSet;
+
 use tool::handle;
 
 mod conf;
-mod tool;
 mod path;
+mod tool;
+
+use clap::Parser;
+
+#[derive(Parser)]
+#[command(name = "relconf")]
+#[command(author = "Kevin F. Konrad")]
+#[command(version = "0.1")]
+#[command(about = "Generate config files depending on the current path", long_about = None)]
+#[command(disable_version_flag = true)]
+struct Cli {
+    #[arg(short = 'v', short_alias = 'V', long, action = clap::builder::ArgAction::Version)]
+    version: (),
+    #[arg(
+        long = "config",
+        short = 'c',
+        help = "Override location of relconf config file"
+    )]
+    config_file: Option<String>,
+    #[arg(
+        long = "only",
+        short = 'o',
+        value_delimiter = ',',
+        help = "Only generate config for listed tool(s)"
+    )]
+    tool_names: Vec<String>,
+}
 
 fn main() {
-    // TODO: read from config file
-    // TODO: add CLI with option to override config file
-    let yaml_data = r#"
-tools:
-- name: jj
-  format: toml
-  rootconfig: ~/.config/jj/config.toml
-  inject:
-    - type: env
-      name: JJCONFIG
-      location: ~/.config/relconf/JJCONFIG
-    - type: file
-      location: ~/.config/relconf/JJCONFIG2
-  subconfigs:
-    - directory: ~/workspace
-      config: ~/.config/jj/workspace.toml
-      match-subdirectories: true
-    - directory: ~/workspace/github/kfkonrad
-      config: ~/.config/jj/kfkonrad.toml
-      match-subdirectories: true
-"#;
-    let config: conf::RelConf = serde_yaml::from_str(yaml_data).unwrap(); // TODO: remove unwraps (later)
+    dirs::config_dir().unwrap();
+    let cli = Cli::parse();
+    let config_path = match cli.config_file {
+        Some(override_filename) => path::normalize(&override_filename),
+        None => match std::env::var_os("RELCONF_CONFIG") {
+            Some(relconf_config) => relconf_config.into(),
+            None => {
+                let mut config_dir = dirs::config_dir().unwrap();
+                config_dir.push("relconf/config.yaml");
+                config_dir
+            }
+        },
+    };
+
+    let raw_config = path::read(&config_path);
+    let tool_name_set: HashSet<String> = cli.tool_names.into_iter().collect();
+
+    let config: conf::RelConf = serde_yaml::from_str(raw_config.as_str()).unwrap(); // TODO: remove unwraps (later)
     config.tools.into_iter().for_each(|tool| {
-        handle(tool)
+        if tool_name_set.is_empty() || tool_name_set.contains(&tool.name) {
+            handle(tool);
+        }
     });
 }
