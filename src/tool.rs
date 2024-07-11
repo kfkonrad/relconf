@@ -20,7 +20,7 @@ pub fn handle(tool: conf::Tool) {
                 println!(
                     "export {}={:#?}",
                     injection.name.unwrap(),
-                    injection.location.to_string_lossy()
+                    path::normalize(&injection.location).to_string_lossy()
                 )
             }
             conf::InjectType::File => {}
