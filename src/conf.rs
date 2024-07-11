@@ -20,17 +20,9 @@ pub struct Tool {
 
 #[derive(Deserialize, Debug)]
 pub struct Inject {
-    #[serde(rename = "type")]
-    pub inject_type: InjectType,
-    pub location: PathBuf,
-    pub name: Option<String>,
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(rename_all = "lowercase")]
-pub enum InjectType {
-    Env,
-    File,
+    pub path: PathBuf,
+    #[serde(rename = "env-name")]
+    pub env_name: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -41,9 +33,14 @@ pub enum Format {
 
 #[derive(Deserialize, Debug)]
 pub struct Subconfig {
-    pub directory: DirectoryPath,
     pub config: FilePath,
-    #[serde(rename = "match-subdirectories")]
+    pub when: Option<Vec<When>>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct When {
+    pub directory: DirectoryPath,
+    #[serde(rename = "match-subdirectories", default)]
     pub match_subdirectories: bool,
 }
 
