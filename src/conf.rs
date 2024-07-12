@@ -6,6 +6,7 @@ use crate::path::{is_dir, is_file};
 
 #[derive(Deserialize, Debug)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
+#[allow(clippy::module_name_repetitions)]
 pub struct RelConf {
     pub tools: Vec<Tool>,
 }
@@ -69,7 +70,7 @@ impl<'de> Deserialize<'de> for FilePath {
             )));
         }
 
-        Ok(FilePath(path))
+        Ok(Self(path))
     }
 }
 
@@ -91,6 +92,6 @@ impl<'de> Deserialize<'de> for DirectoryPath {
             ));
         }
 
-        Ok(DirectoryPath(path))
+        Ok(Self(path))
     }
 }

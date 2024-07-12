@@ -19,10 +19,9 @@ where
     SP: ?Sized + AsRef<Path>,
 {
     let potential_normal_path = tilde(path);
-    match potential_normal_path.canonicalize() {
-        Ok(p) => p,
-        Err(_) => potential_normal_path.into(),
-    }
+    potential_normal_path
+        .canonicalize()
+        .unwrap_or_else(|_| potential_normal_path.into())
 }
 
 pub fn is_subdir(parent: &PathBuf, subdir: &PathBuf) -> bool {

@@ -38,12 +38,12 @@ fn shold_run(subconfig: &Subconfig) -> bool {
     false
 }
 fn perform_injection(inject: Inject, table: &Table) {
-    path::write_toml(&inject.path, &table);
+    path::write_toml(&inject.path, table);
     if let Some(env_name) = inject.env_name {
         println!(
             "export {}={:#?}",
             env_name,
             path::normalize(&inject.path).to_string_lossy()
-        )
+        );
     }
 }

@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, path::PathBuf};
 
 use tool::handle;
 
@@ -35,20 +35,24 @@ struct Cli {
     generate_schema: bool,
 }
 
+fn env_or_default_config_path() -> PathBuf {
+    std::env::var_os("RELCONF_CONFIG").map_or_else(default_config_path, std::convert::Into::into)
+}
+
+fn default_config_path() -> PathBuf {
+    let mut config_dir = dirs::config_dir().unwrap();
+    config_dir.push("relconf/config.yaml");
+    config_dir
+}
+
 fn main() {
     dirs::config_dir().unwrap();
     let cli = Cli::parse();
-    let config_path = match cli.config_file {
-        Some(override_filename) => path::normalize(&override_filename),
-        None => match std::env::var_os("RELCONF_CONFIG") {
-            Some(relconf_config) => relconf_config.into(),
-            None => {
-                let mut config_dir = dirs::config_dir().unwrap();
-                config_dir.push("relconf/config.yaml");
-                config_dir
-            }
-        },
-    };
+    let config_path = cli
+        .config_file
+        .map_or_else(env_or_default_config_path, |override_filename| {
+            path::normalize(&override_filename)
+        });
 
     #[cfg(feature = "schema")]
     if cli.generate_schema {
