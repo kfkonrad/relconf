@@ -2,6 +2,8 @@
 
 set -euf -o pipefail
 
+CLI_NAME=relconf
+
 ensure_targets() {
   required_targets=$*
   installed_targets=$(rustup target list --installed)
@@ -90,14 +92,14 @@ do
   else
     bsd_tar_flags=""
   fi
-  tar -cZf "target/bins/${target}.tar.gz" -C "target/${target}/release" $bsd_tar_flags standard-readme
+  tar -cZf "target/bins/${target}.tar.gz" -C "target/${target}/release" $bsd_tar_flags $CLI_NAME
 done
 
 for target in $windows
 do
   release_dir="target/${target}/release"
   pushd "$release_dir" > /dev/null
-    zip -q "${target}.zip" standard-readme.exe
+    zip -q "${target}.zip" $CLI_NAME.exe
   popd > /dev/null
   mv "${release_dir}/${target}.zip" target/bins
 done

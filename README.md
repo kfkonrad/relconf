@@ -125,7 +125,7 @@ cargo run -F schema -- --generate-schema
 
 See the documentation of
 [kfkonrad/generator-standard-readme-rust](https://github.com/kfkonrad/generator-standard-readme-rust?tab=readme-ov-file#publishing-standard-readme)
-on how publishing `relconf` works. Both repos use the same mechansim and scripts.
+on how publishing `relconf` works. Both repos use the same mechanism and scripts.
 
 ## Maintainers
 
