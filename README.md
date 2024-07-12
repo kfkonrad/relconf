@@ -19,8 +19,27 @@ final configuration to disk and optionally outputs an enivorment variable pointi
 
 ## Install
 
-Clone the repo before running the following command and make sure you have a recent version of the
-[Rust toolchain](https://rustup.rs/) installed.
+You can download the correct version for your operating system and architecture using the `download.ps1` script. Don't
+let the name fool you, the script works with Bash/ZSH on Linux or macOS too!
+
+On Linux or macOS run:
+
+```sh
+curl -s https://raw.githubusercontent.com/kfkonrad/relconf/main/download.ps1 | bash
+# OR
+wget -qO- https://raw.githubusercontent.com/kfkonrad/relconf/main/download.ps1 | bash
+```
+
+On Windows run:
+
+```pwsh
+Invoke-Expression ((Invoke-WebRequest -Uri "https://raw.githubusercontent.com/kfkonrad/relconf/main/download.ps1").Content)
+```
+
+If you don't like running scripts from the internet you can find and download the application in the
+[releases section of this repo](https://github.com/kfkonrad/relconf/releases) as well.
+
+You can also install from source after cloning the repo:
 
 ```sh
 cargo install --path .
