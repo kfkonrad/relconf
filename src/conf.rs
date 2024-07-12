@@ -36,6 +36,8 @@ pub struct Inject {
 #[serde(rename_all = "lowercase")]
 pub enum Format {
     Toml,
+    Yaml,
+    Json,
 }
 
 #[derive(Deserialize, Debug)]

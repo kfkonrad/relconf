@@ -3,8 +3,7 @@ use std::env;
 use toml::Table;
 
 use crate::{
-    conf::{self, Inject, Subconfig},
-    path,
+    conf::{self, Inject, Subconfig}, merge, path
 };
 
 use color_eyre::{
@@ -13,6 +12,14 @@ use color_eyre::{
 };
 
 pub fn handle(tool: conf::Tool) -> Result<()> {
+    match tool.format {
+        conf::Format::Toml => handle_toml(tool),
+        conf::Format::Yaml => handle_yaml(tool),
+        conf::Format::Json => handle_json(tool),
+    }
+}
+
+pub fn handle_toml(tool: conf::Tool) -> Result<()> {
     let mut merged_config: Table = path::read_toml(&tool.rootconfig.0)?;
     for subconfig in tool.subconfigs {
         if shold_run(&subconfig)? {
@@ -26,7 +33,45 @@ pub fn handle(tool: conf::Tool) -> Result<()> {
         }
     }
     for inject in tool.inject {
-        perform_injection(inject, &merged_config)?;
+        perform_injection_toml(inject, &merged_config)?;
+    }
+    Ok(())
+}
+
+pub fn handle_yaml(tool: conf::Tool) -> Result<()> {
+    let mut merged_config: serde_yaml::Value = path::read_yaml(&tool.rootconfig.0)?;
+    for subconfig in tool.subconfigs {
+        if shold_run(&subconfig)? {
+            let additional_config: serde_yaml::Value = path::read_yaml(&subconfig.path.0)?;
+            merge::yaml(&mut merged_config, additional_config).map_err(|e| {
+                eyre!(format!(
+                    "unable to merge subconfig from {:#?} for tool {}: {e}",
+                    subconfig.path.0, tool.name
+                ))
+            })?;
+        }
+    }
+    for inject in tool.inject {
+        perform_injection_yaml(inject, &merged_config)?;
+    }
+    Ok(())
+}
+
+pub fn handle_json(tool: conf::Tool) -> Result<()> {
+    let mut merged_config: serde_json::Value = path::read_json(&tool.rootconfig.0)?;
+    for subconfig in tool.subconfigs {
+        if shold_run(&subconfig)? {
+            let additional_config: serde_json::Value = path::read_json(&subconfig.path.0)?;
+            merge::json(&mut merged_config, additional_config).map_err(|e| {
+                eyre!(format!(
+                    "unable to merge subconfig from {:#?} for tool {}: {e}",
+                    subconfig.path.0, tool.name
+                ))
+            })?;
+        }
+    }
+    for inject in tool.inject {
+        perform_injection_json(inject, &merged_config)?;
     }
     Ok(())
 }
@@ -50,8 +95,7 @@ fn shold_run(subconfig: &Subconfig) -> Result<bool> {
     Ok(false)
 }
 
-fn perform_injection(inject: Inject, table: &Table) -> Result<()> {
-    path::write_toml(&inject.path, table)?;
+fn perform_injection_generic(inject: Inject) -> Result<()> {
     if let Some(env_name) = inject.env_name {
         println!(
             "export {}={:#?}",
@@ -60,4 +104,21 @@ fn perform_injection(inject: Inject, table: &Table) -> Result<()> {
         );
     }
     Ok(())
+}
+
+fn perform_injection_toml(inject: Inject, table: &Table) -> Result<()> {
+    path::write_toml(&inject.path, table)?;
+    perform_injection_generic(inject)
+}
+
+
+fn perform_injection_yaml(inject: Inject, value: &serde_yaml::Value) -> Result<()> {
+    path::write_yaml(&inject.path, value)?;
+    perform_injection_generic(inject)
+}
+
+
+fn perform_injection_json(inject: Inject, value: &serde_json::Value) -> Result<()> {
+    path::write_json(&inject.path, value)?;
+    perform_injection_generic(inject)
 }

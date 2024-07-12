@@ -5,6 +5,7 @@ use tool::handle;
 mod conf;
 mod path;
 mod tool;
+mod merge;
 
 use clap::Parser;
 
