@@ -96,6 +96,8 @@ The output to stdout made by `relconf` is safe to `source` in Bash, ZSH (and oth
 This makes it easy to automatically set the approriate configuration variable like the snippets in the
 [section above](#relconf-in-practice) do.
 
+There's also a JSON Schmema for the `relconf` config format available in [/assets/relconf.schema.json].
+
 ### Config file location
 
 The default location for the config file depends on your operating system.
@@ -108,6 +110,15 @@ See the table below for an overview. Note that only Linux, macOS and Windows are
 | Windows | `C:\Users\USERNAME\AppData\Roaming\relconf\config.yaml`                       |
 
 You can override the default location by setting `RELCONF_CONFIG` or by using `relconf -c path/to/config.yaml`.
+
+### generting the schema
+
+To generate the schema, `relconf` needs to be built with the `schmema` feature enabled. You can enable the feature and
+generate the schema like so:
+
+```sh
+cargo run -F schema -- --generate-schema
+```
 
 ## Maintainers
 

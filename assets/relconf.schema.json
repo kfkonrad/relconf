@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RelConf",
+  "type": "object",
+  "required": [
+    "tools"
+  ],
+  "properties": {
+    "tools": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Tool"
+      }
+    }
+  },
+  "definitions": {
+    "DirectoryPath": {
+      "type": "string"
+    },
+    "FilePath": {
+      "type": "string"
+    },
+    "Format": {
+      "type": "string",
+      "enum": [
+        "toml"
+      ]
+    },
+    "Inject": {
+      "type": "object",
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "env-name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "path": {
+          "type": "string"
+        }
+      }
+    },
+    "Subconfig": {
+      "type": "object",
+      "required": [
+        "config"
+      ],
+      "properties": {
+        "config": {
+          "$ref": "#/definitions/FilePath"
+        },
+        "when": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/When"
+          }
+        }
+      }
+    },
+    "Tool": {
+      "type": "object",
+      "required": [
+        "format",
+        "inject",
+        "name",
+        "rootconfig",
+        "subconfigs"
+      ],
+      "properties": {
+        "format": {
+          "$ref": "#/definitions/Format"
+        },
+        "inject": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Inject"
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "rootconfig": {
+          "$ref": "#/definitions/FilePath"
+        },
+        "subconfigs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Subconfig"
+          }
+        }
+      }
+    },
+    "When": {
+      "type": "object",
+      "required": [
+        "directory"
+      ],
+      "properties": {
+        "directory": {
+          "$ref": "#/definitions/DirectoryPath"
+        },
+        "match-subdirectories": {
+          "default": false,
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

@@ -30,6 +30,9 @@ struct Cli {
         help = "Only generate config for listed tool(s)"
     )]
     tool_names: Vec<String>,
+    #[cfg(feature = "schema")]
+    #[arg(long, help = "Generate JSON schema")]
+    generate_schema: bool,
 }
 
 fn main() {
@@ -46,6 +49,14 @@ fn main() {
             }
         },
     };
+
+    #[cfg(feature = "schema")]
+    if cli.generate_schema {
+        use schemars::schema_for;
+        let schema = schema_for!(conf::RelConf);
+        println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+        return;
+    }
 
     let raw_config = path::read(&config_path);
     let tool_name_set: HashSet<String> = cli.tool_names.into_iter().collect();

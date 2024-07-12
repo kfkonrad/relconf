@@ -5,11 +5,13 @@ use serde::{Deserialize, Deserializer};
 use crate::path::{is_dir, is_file};
 
 #[derive(Deserialize, Debug)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct RelConf {
     pub tools: Vec<Tool>,
 }
 
 #[derive(Deserialize, Debug)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct Tool {
     pub name: String,
     pub format: Format,
@@ -19,6 +21,7 @@ pub struct Tool {
 }
 
 #[derive(Deserialize, Debug)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct Inject {
     pub path: PathBuf,
     #[serde(rename = "env-name")]
@@ -26,18 +29,21 @@ pub struct Inject {
 }
 
 #[derive(Deserialize, Debug)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
 pub enum Format {
     Toml,
 }
 
 #[derive(Deserialize, Debug)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct Subconfig {
     pub config: FilePath,
     pub when: Option<Vec<When>>,
 }
 
 #[derive(Deserialize, Debug)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct When {
     pub directory: DirectoryPath,
     #[serde(rename = "match-subdirectories", default)]
@@ -45,6 +51,7 @@ pub struct When {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct FilePath(pub PathBuf);
 
 impl<'de> Deserialize<'de> for FilePath {
@@ -67,6 +74,7 @@ impl<'de> Deserialize<'de> for FilePath {
 }
 
 #[derive(Debug)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct DirectoryPath(pub PathBuf);
 
 impl<'de> Deserialize<'de> for DirectoryPath {
