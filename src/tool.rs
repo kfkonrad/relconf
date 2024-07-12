@@ -16,11 +16,11 @@ pub fn handle(tool: conf::Tool) -> Result<()> {
     let mut merged_config: Table = path::read_toml(&tool.rootconfig.0)?;
     for subconfig in tool.subconfigs {
         if shold_run(&subconfig)? {
-            let additional_config: Table = path::read_toml(&subconfig.config.0)?;
+            let additional_config: Table = path::read_toml(&subconfig.path.0)?;
             merge_into_table(&mut merged_config, additional_config).map_err(|e| {
                 eyre!(format!(
                     "unable to merge subconfig from {:#?} for tool {}: {e}",
-                    subconfig.config.0, tool.name
+                    subconfig.path.0, tool.name
                 ))
             })?;
         }

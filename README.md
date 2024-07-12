@@ -97,8 +97,8 @@ tools:
       path: ~/.config/jj/merged.toml
     - path: ~/.config/jj/other-location.toml
   subconfigs:
-    - config: ~/.config/jj/always.toml
-    - config: ~/.config/jj/company.toml
+    - path: ~/.config/jj/always.toml
+    - path: ~/.config/jj/company.toml
       when: # optional, when absent the subconfig will always be imported
         - directory: ~/workspace/company-gitlab
           match-subdirectories: true # optional, defaults to false

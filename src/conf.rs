@@ -41,7 +41,7 @@ pub enum Format {
 #[derive(Deserialize, Debug)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct Subconfig {
-    pub config: FilePath,
+    pub path: FilePath,
     pub when: Option<Vec<When>>,
 }
 

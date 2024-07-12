@@ -46,10 +46,10 @@
     "Subconfig": {
       "type": "object",
       "required": [
-        "config"
+        "path"
       ],
       "properties": {
-        "config": {
+        "path": {
           "$ref": "#/definitions/FilePath"
         },
         "when": {

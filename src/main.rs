@@ -70,7 +70,7 @@ fn main() -> color_eyre::Result<()> {
         use schemars::schema_for;
         let schema = schema_for!(conf::RelConf);
         println!("{}", serde_json::to_string_pretty(&schema).unwrap());
-        return;
+        return Ok(());
     }
 
     let raw_config = path::read(&config_path)?;
