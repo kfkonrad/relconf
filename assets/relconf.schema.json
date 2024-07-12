@@ -23,7 +23,9 @@
     "Format": {
       "type": "string",
       "enum": [
-        "toml"
+        "toml",
+        "yaml",
+        "json"
       ]
     },
     "Inject": {

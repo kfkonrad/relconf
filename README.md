@@ -4,9 +4,9 @@
 
 Config relative to the current path
 
-`relconf` generates toml configuration files based on the current path. It reads its configuration from a yaml file
-(see [Usage](#usage) for where that file is expected to be), merges toml files based on the current path, writes the
-final configuration to disk and optionally outputs an enivorment variable pointing to the generated config.
+`relconf` generates toml, yaml and configuration files based on the current path. It reads its configuration from a yaml
+file (see [Usage](#usage) for where that file is expected to be), merges toml/yaml/json files based on the current path,
+writes the final configuration to disk and optionally outputs an environment variable pointing to the generated config.
 
 ## Table of Contents
 
@@ -90,7 +90,7 @@ current and appropriate for whatever directory you're running `foo` in.
 ```yaml
 tools:
 - name: jj
-  format: toml # right now only toml is supported
+  format: toml # or yaml or json
   rootconfig: ~/.jjconfig.toml # mandatory
   inject:
     - env-name: JJ_CONFIG # optional
@@ -109,14 +109,14 @@ tools:
 If an injection has the `env-name` key set `relconf` will output something like this (based on the above config):
 
 ```sh
-export JJ_CONFIG=/home/USERNAM/.config/jj/merged.toml
+export JJ_CONFIG=/home/USERNAME/.config/jj/merged.toml
 ```
 
 The output to stdout made by `relconf` is safe to `source` in Bash, ZSH (and other posix compatible shells) and Fish.
-This makes it easy to automatically set the approriate configuration variable like the snippets in the
+This makes it easy to automatically set the appropriate configuration variable like the snippets in the
 [section above](#relconf-in-practice) do.
 
-There's also a JSON Schmema for the `relconf` config format available in [/assets/relconf.schema.json].
+There's also a JSON Schema for the `relconf` config format available in [/assets/relconf.schema.json].
 
 ### Config file location
 
@@ -133,7 +133,7 @@ You can override the default location by setting `RELCONF_CONFIG` or by using `r
 
 ### generting the schema
 
-To generate the schema, `relconf` needs to be built with the `schmema` feature enabled. You can enable the feature and
+To generate the schema, `relconf` needs to be built with the `schema` feature enabled. You can enable the feature and
 generate the schema like so:
 
 ```sh
