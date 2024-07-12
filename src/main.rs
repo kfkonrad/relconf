@@ -3,9 +3,9 @@ use std::{collections::HashSet, path::PathBuf};
 use tool::handle;
 
 mod conf;
+mod merge;
 mod path;
 mod tool;
-mod merge;
 
 use clap::Parser;
 

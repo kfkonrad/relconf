@@ -1,7 +1,15 @@
-use color_eyre::{eyre::ContextCompat, Result};
+use color_eyre::{
+    eyre::{eyre, ContextCompat},
+    Result,
+};
+use serde_toml_merge::merge_into_table;
 
 static ERROR_MESSAGE_YAML: &str = "failed merging yaml documents";
 static ERROR_MESSAGE_JSON: &str = "failed merging json documents";
+
+pub fn toml(a: &mut toml::Table, b: toml::Table) -> Result<()> {
+    merge_into_table(a, b).map_err(|e| eyre!(format!("failed merging toml table: {e}")))
+}
 
 pub fn yaml(a: &mut serde_yaml::Value, b: serde_yaml::Value) -> Result<()> {
     match (a, b) {
