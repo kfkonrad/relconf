@@ -4,6 +4,8 @@ use serde::{Deserialize, Deserializer};
 
 use crate::path::{is_dir, is_file};
 
+use color_eyre::Result;
+
 #[derive(Deserialize, Debug)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[allow(clippy::module_name_repetitions)]
@@ -51,6 +53,13 @@ pub struct When {
     pub match_subdirectories: bool,
 }
 
+fn errconvert<E, R>(e: Result<R>) -> Result<R, E>
+where
+    E: serde::de::Error,
+{
+    e.map_err(|e| serde::de::Error::custom(e.to_string()))
+}
+
 #[derive(Debug)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct FilePath(pub PathBuf);
@@ -63,7 +72,7 @@ impl<'de> Deserialize<'de> for FilePath {
         let s: String = Deserialize::deserialize(deserializer)?;
         let path = PathBuf::from(s);
 
-        if !is_file(&path) {
+        if !errconvert(is_file(&path))? {
             return Err(serde::de::Error::custom(format!(
                 "Expected a file path or symlink to a file, received {}",
                 path.to_string_lossy()
@@ -86,7 +95,7 @@ impl<'de> Deserialize<'de> for DirectoryPath {
         let s: String = Deserialize::deserialize(deserializer)?;
         let path = PathBuf::from(s);
 
-        if !is_dir(&path) {
+        if !errconvert(is_dir(&path))? {
             return Err(serde::de::Error::custom(
                 "Expected a directory path or symlink to a directory",
             ));

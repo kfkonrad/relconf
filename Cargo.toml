@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.9", features = ["derive"] }
+color-eyre = "0.6.3"
 dirs = "5.0.1"
 schemars = { version = "0.8.21", optional = true }
 serde = { version = "1.0.204", features = ["derive"] }
@@ -16,3 +17,19 @@ toml = "0.8.14"
 
 [features]
 schema = ["schemars"]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+enum_glob_use = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -2 }
+nursery = { level = "deny", priority = -3 }
+unwrap_used = { level = "deny", priority = -4 }
+
+[profile.release]
+opt-level = 'z'   # Optimize for size.
+lto = true        # Enable Link Time Optimisation
+codegen-units = 1 # Reduced to increase optimisations.
+panic = 'abort'   # Abort on panic
+strip = "symbols" # Strip symbols from binary

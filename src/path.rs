@@ -6,11 +6,18 @@ use std::{
 use shellexpand::path::tilde;
 use toml::Table;
 
-pub fn normalize<SP>(path: &SP) -> PathBuf
+use color_eyre::{
+    eyre::{Context, ContextCompat, Ok},
+    Result,
+};
+
+pub fn normalize<SP>(path: &SP) -> Result<PathBuf>
 where
-    SP: ?Sized + AsRef<Path>,
+    SP: ?Sized + AsRef<Path> + std::fmt::Debug,
 {
-    tilde(path).canonicalize().unwrap()
+    tilde(path)
+        .canonicalize()
+        .wrap_err(format!("no such path {path:#?}"))
 }
 
 // this means the path needn't exist (only existing paths can be canonicalized)
@@ -24,35 +31,37 @@ where
         .unwrap_or_else(|_| potential_normal_path.into())
 }
 
-pub fn is_subdir(parent: &PathBuf, subdir: &PathBuf) -> bool {
-    let parent_canon = normalize(parent);
-    let subdir_canon = normalize(subdir);
+pub fn is_subdir(parent: &PathBuf, subdir: &PathBuf) -> Result<bool> {
+    let parent_canon = normalize(parent)?;
+    let subdir_canon = normalize(subdir)?;
 
-    subdir_canon.starts_with(parent_canon)
+    Ok(subdir_canon.starts_with(parent_canon))
 }
 
-pub fn is_file(path: &Path) -> bool {
-    normalize(&path).is_file()
+pub fn is_file(path: &Path) -> Result<bool> {
+    Ok(normalize(&path)?.is_file())
 }
 
-pub fn is_dir(path: &Path) -> bool {
-    normalize(&path).is_dir()
+pub fn is_dir(path: &Path) -> Result<bool> {
+    Ok(normalize(&path)?.is_dir())
 }
 
-pub fn read_toml(path: &PathBuf) -> Table {
-    std::fs::read_to_string(normalize(path))
-        .unwrap()
+pub fn read_toml(path: &PathBuf) -> Result<Table> {
+    read(path)?
         .parse()
-        .unwrap()
+        .wrap_err(format!("could not parse file {path:#?} as toml"))
 }
 
-pub fn read(path: &PathBuf) -> String {
-    std::fs::read_to_string(normalize(path)).unwrap()
+pub fn read(path: &PathBuf) -> Result<String> {
+    std::fs::read_to_string(normalize(path)?).wrap_err(format!("could not read file {path:#?}"))
 }
 
-pub fn write_toml(path: &PathBuf, table: &Table) {
+pub fn write_toml(path: &PathBuf, table: &Table) -> Result<()> {
     let path = permissive_normalize(path);
-    let parent = path.parent().unwrap();
-    fs::create_dir_all(parent).unwrap();
-    fs::write(path, table.to_string()).unwrap();
+    let parent = path
+        .parent()
+        .wrap_err(format!("unable to determine parent of {path:#?}"))?;
+    fs::create_dir_all(parent).wrap_err(format!("failed to create directory {parent:#?}"))?;
+    fs::write(&path, table.to_string())
+        .wrap_err(format!("unable to write merged config to {path:#?}"))
 }

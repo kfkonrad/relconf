@@ -8,6 +8,11 @@ mod tool;
 
 use clap::Parser;
 
+use color_eyre::{
+    eyre::{eyre, Context, Ok, OptionExt},
+    Result,
+};
+
 #[derive(Parser)]
 #[command(name = "relconf")]
 #[command(author = "Kevin F. Konrad")]
@@ -35,24 +40,30 @@ struct Cli {
     generate_schema: bool,
 }
 
-fn env_or_default_config_path() -> PathBuf {
-    std::env::var_os("RELCONF_CONFIG").map_or_else(default_config_path, std::convert::Into::into)
+fn env_or_default_config_path() -> Result<PathBuf> {
+    std::env::var_os("RELCONF_CONFIG")
+        .map_or_else(default_config_path, |config_path| Ok(config_path.into()))
 }
 
-fn default_config_path() -> PathBuf {
-    let mut config_dir = dirs::config_dir().unwrap();
+fn default_config_path() -> Result<PathBuf> {
+    let mut config_dir = dirs::config_dir().ok_or_eyre(eyre!(
+        "could not determine default directory for refconf config"
+    ))?;
     config_dir.push("relconf/config.yaml");
-    config_dir
+    Ok(config_dir)
 }
 
-fn main() {
-    dirs::config_dir().unwrap();
+fn main() -> color_eyre::Result<()> {
+    color_eyre::config::HookBuilder::default()
+        .display_env_section(false)
+        .display_location_section(false)
+        .install()?;
     let cli = Cli::parse();
     let config_path = cli
         .config_file
         .map_or_else(env_or_default_config_path, |override_filename| {
             path::normalize(&override_filename)
-        });
+        })?;
 
     #[cfg(feature = "schema")]
     if cli.generate_schema {
@@ -62,13 +73,16 @@ fn main() {
         return;
     }
 
-    let raw_config = path::read(&config_path);
+    let raw_config = path::read(&config_path)?;
     let tool_name_set: HashSet<String> = cli.tool_names.into_iter().collect();
 
-    let config: conf::RelConf = serde_yaml::from_str(raw_config.as_str()).unwrap(); // TODO: remove unwraps (later)
-    config.tools.into_iter().for_each(|tool| {
+    let config: conf::RelConf = serde_yaml::from_str(raw_config.as_str()).wrap_err(format!(
+        "error parsing relconf config from {config_path:#?}"
+    ))?;
+    for tool in config.tools {
         if tool_name_set.is_empty() || tool_name_set.contains(&tool.name) {
-            handle(tool);
+            handle(tool)?;
         }
-    });
+    }
+    Ok(())
 }
