@@ -12,6 +12,7 @@ final configuration to disk and optionally outputs an enivorment variable pointi
 
 - [Install](#install)
 - [Usage](#usage)
+- [Publishing `relconf`](#publishing-relconf)
 - [Maintainers](#maintainers)
 - [Contributing](#contributing)
 - [License](#license)
@@ -119,6 +120,12 @@ generate the schema like so:
 ```sh
 cargo run -F schema -- --generate-schema
 ```
+
+## Publishing `relconf`
+
+See the documentation of
+[kfkonrad/generator-standard-readme-rust](https://github.com/kfkonrad/generator-standard-readme-rust?tab=readme-ov-file#publishing-standard-readme)
+on how publishing `relconf` works. Both repos use the same mechansim and scripts.
 
 ## Maintainers
 
