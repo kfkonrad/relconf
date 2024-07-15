@@ -74,7 +74,8 @@ fn main() -> color_eyre::Result<()> {
         return Ok(());
     }
 
-    let raw_config = path::read(&config_path)?;
+    let raw_config =
+        path::read(&config_path).wrap_err("error trying to read relconf configuration")?;
     let tool_name_set: HashSet<String> = cli.tool_names.into_iter().collect();
 
     let config: conf::RelConf = serde_yaml::from_str(raw_config.as_str()).wrap_err(format!(
@@ -82,7 +83,10 @@ fn main() -> color_eyre::Result<()> {
     ))?;
     for tool in config.tools {
         if tool_name_set.is_empty() || tool_name_set.contains(&tool.name) {
-            handle(tool)?;
+            let tool_name = tool.name.clone();
+            handle(tool).wrap_err(format!(
+                "error trying to generate configuration for {tool_name:#}"
+            ))?;
         }
     }
     Ok(())
