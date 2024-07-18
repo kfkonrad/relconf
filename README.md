@@ -2,7 +2,7 @@
 
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-Config relative to the current path
+Manage configuration depending to the current path
 
 `relconf` generates toml, yaml and configuration files based on the current path. It reads its configuration from a yaml
 file (see [Usage](#usage) for where that file is expected to be), merges toml/yaml/json files based on the current path,
@@ -39,10 +39,10 @@ Invoke-Expression ((Invoke-WebRequest -Uri "https://raw.githubusercontent.com/kf
 If you don't like running scripts from the internet you can find and download the application in the
 [releases section of this repo](https://github.com/kfkonrad/relconf/releases) as well.
 
-You can also install from source after cloning the repo:
+You can also install from source using cargo:
 
 ```sh
-cargo install --path .
+cargo install relconf
 ```
 
 ## Usage

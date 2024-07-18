@@ -1,7 +1,13 @@
 [package]
 name = "relconf"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
+license = "MIT"
+description = "Manage configuration depending to the current path"
+homepage = "https://github.com/kfkonrad/relconf"
+repository = "https://github.com/kfkonrad/relconf"
+readme = "README.md"
+categories = ["command-line-utilities"]
 
 [dependencies]
 clap = { version = "4.5.9", features = ["derive"] }
