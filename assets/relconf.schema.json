@@ -14,6 +14,50 @@
     }
   },
   "definitions": {
+    "Config": {
+      "type": "object",
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "command": {
+              "type": "null"
+            },
+            "path": {
+              "$ref": "#/definitions/FilePath"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "command"
+          ],
+          "properties": {
+            "command": {
+              "type": "string"
+            },
+            "path": {
+              "type": "null"
+            }
+          }
+        }
+      ],
+      "properties": {
+        "when": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/When"
+          }
+        }
+      }
+    },
     "DirectoryPath": {
       "type": "string"
     },
@@ -45,36 +89,21 @@
         }
       }
     },
-    "Subconfig": {
-      "type": "object",
-      "required": [
-        "path"
-      ],
-      "properties": {
-        "path": {
-          "$ref": "#/definitions/FilePath"
-        },
-        "when": {
-          "type": [
-            "array",
-            "null"
-          ],
-          "items": {
-            "$ref": "#/definitions/When"
-          }
-        }
-      }
-    },
     "Tool": {
       "type": "object",
       "required": [
+        "configs",
         "format",
         "inject",
-        "name",
-        "rootconfig",
-        "subconfigs"
+        "name"
       ],
       "properties": {
+        "configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Config"
+          }
+        },
         "format": {
           "$ref": "#/definitions/Format"
         },
@@ -86,15 +115,6 @@
         },
         "name": {
           "type": "string"
-        },
-        "rootconfig": {
-          "$ref": "#/definitions/FilePath"
-        },
-        "subconfigs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Subconfig"
-          }
         }
       }
     },

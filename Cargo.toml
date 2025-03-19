@@ -10,17 +10,18 @@ readme = "README.md"
 categories = ["command-line-utilities"]
 
 [dependencies]
-clap = { version = "4.5.9", features = ["derive"] }
+clap = { version = "4.5.32", features = ["derive"] }
 color-eyre = "0.6.3"
-dirs = "5.0.1"
-paste = "1.0.15"
-schemars = { version = "0.8.21", optional = true }
-serde = { version = "1.0.204", features = ["derive"] }
+dirs = "6.0.0"
+paste = { version = "0.1.0", package = "pastey" }
+schemars = { version = "0.8.22", optional = true }
+serde = { version = "1.0.219", features = ["derive"] }
 serde-toml-merge = "0.3.8"
-serde_json = "1.0.120"
-serde_yaml = "0.9.34"
+serde_json = "1.0.140"
+serde_yaml = "0.9.34+deprecated"
+shell-words = "1.1.0"
 shellexpand = { version = "3.1.0", features = ["path"] }
-toml = "0.8.14"
+toml = "0.8.20"
 
 [features]
 schema = ["schemars"]

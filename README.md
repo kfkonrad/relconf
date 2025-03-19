@@ -91,20 +91,20 @@ current and appropriate for whatever directory you're running `foo` in.
 tools:
 - name: jj
   format: toml # or yaml or json
-  rootconfig: ~/.jjconfig.toml # mandatory
   inject:
     - env-name: JJ_CONFIG # optional
       path: ~/.config/jj/merged.toml
     - path: ~/.config/jj/other-location.toml
-  subconfigs:
+  configs:
     - path: ~/.config/jj/always.toml
+    - command: erb ~/.config/jj/templated.toml.erb # path and command are mutually exclusive
     - path: ~/.config/jj/company.toml
-      when: # optional, when absent the subconfig will always be imported
+      when: # optional, when absent the config will always be imported
         - directory: ~/workspace/company-gitlab
           match-subdirectories: true # optional, defaults to false
 ```
 
-`relconf` preserves the order in which subconfigs are listed and will merge and overwrite values in that order as well.
+`relconf` preserves the order in which configs are listed and will merge and overwrite values in that order as well.
 
 If an injection has the `env-name` key set `relconf` will output something like this (based on the above config):
 
@@ -117,6 +117,20 @@ This makes it easy to automatically set the appropriate configuration variable l
 [section above](#relconf-in-practice) do.
 
 There's also a JSON Schema for the `relconf` config format available in [/assets/relconf.schema.json].
+
+### Using templating to generate config file
+
+`relconf` can optionally run arbitrary programs on any templated input config file to auto-generate the config. Your
+specified command should print the config to stdout.
+
+```yaml
+tools:
+- name: jj
+  format: toml
+  inject:
+    - path: ~/.config/jj/always.toml
+    - command: sh ~/.config/jj/foo.toml.sh # reminder: path and command are mutually exclusive
+```
 
 ### Config file location
 

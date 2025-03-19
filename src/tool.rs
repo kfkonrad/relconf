@@ -2,7 +2,7 @@ use std::env;
 use toml::Table;
 
 use crate::{
-    conf::{self, Inject, Subconfig},
+    conf::{self, Inject, Config},
     merge, path,
 };
 
@@ -23,14 +23,23 @@ macro_rules! define_handle_function {
     ($name_suffix:ident, $config_type:ty, $read_call:path, $merge_call:path, $perform_injection_call:path) => {
         paste::paste! {
             pub fn [<handle_ $name_suffix>](tool: conf::Tool) -> Result<()> {
-                let mut merged_config: $config_type = $read_call(&tool.rootconfig.0)?;
-                for subconfig in tool.subconfigs {
-                    if shold_run(&subconfig)? {
-                        let additional_config: $config_type = $read_call(&subconfig.path.0)?;
+                let mut merged_config: $config_type = $config_type::default();
+                for config in tool.configs {
+                    if shold_run(&config)? {
+                        let additional_config: $config_type = match &config.config {
+                            conf::InjectConfig::Path {path, ..} => $read_call(&Some(path.0.clone()), None),
+                            conf::InjectConfig::Template {command, ..} => $read_call(&None, Some(command.into())),
+                        }?;
+                        let stringified_config: String = match &config.config {
+                            conf::InjectConfig::Path {path, ..} => path::normalize(&path.0)?.to_string_lossy().into(),
+                            conf::InjectConfig::Template {command, ..} => command.into(),
+                        };
+
+
                         $merge_call(&mut merged_config, additional_config).map_err(|e| {
                             eyre!(format!(
-                                "unable to merge subconfig from {:#?} for tool {}: {e}",
-                                subconfig.path.0, tool.name
+                                "unable to merge config from {:#?} for tool {}: {e}",
+                                stringified_config, tool.name
                             ))
                         })?;
                     }
@@ -66,11 +75,11 @@ define_handle_function!(
     perform_injection_json
 );
 
-fn shold_run(subconfig: &Subconfig) -> Result<bool> {
+fn shold_run(config: &Config) -> Result<bool> {
     let current_dir =
         env::current_dir().wrap_err("cannot determine current directory or doesn't exist")?;
     let empty = Vec::new();
-    let when_vec = subconfig.when.as_ref().unwrap_or(&empty);
+    let when_vec = config.when.as_ref().unwrap_or(&empty);
     if when_vec.is_empty() {
         return Ok(true);
     };
