@@ -1,10 +1,6 @@
 use std::env;
 
-use crate::{
-    conf,
-    format::{Config, Json, Toml, Yaml},
-    path,
-};
+use crate::{conf, format::Config, path};
 
 use color_eyre::{
     eyre::{Context, Ok},
@@ -13,9 +9,9 @@ use color_eyre::{
 
 pub fn handle(tool: conf::Tool) -> Result<()> {
     match tool.format {
-        conf::Format::Toml => Toml::handle_tool(tool),
-        conf::Format::Yaml => Yaml::handle_tool(tool),
-        conf::Format::Json => Json::handle_tool(tool),
+        conf::Format::Toml => toml::Table::handle_tool(tool),
+        conf::Format::Yaml => serde_yaml::Value::handle_tool(tool),
+        conf::Format::Json => serde_json::Value::handle_tool(tool),
     }
 }
 

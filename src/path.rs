@@ -58,11 +58,14 @@ pub fn run_command(command: &str) -> Result<String> {
         .output()
         .wrap_err(format!("failed to execute command {command}"))?;
     if output.status.success() {
-        Ok(String::from_utf8(output.stdout).wrap_err(format!("failed to parse output of command {command} as utf8"))?)
+        Ok(String::from_utf8(output.stdout).wrap_err(format!(
+            "failed to parse output of command {command} as utf8"
+        ))?)
     } else {
         Err(color_eyre::eyre::eyre!(
             "{}",
-            String::from_utf8(output.stderr).unwrap_or_else(|_| format!("unknown error executing command {command}"))
+            String::from_utf8(output.stderr)
+                .unwrap_or_else(|_| format!("unknown error executing command {command}"))
         ))
     }
 }

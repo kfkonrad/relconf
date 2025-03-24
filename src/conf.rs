@@ -13,7 +13,6 @@ pub struct RelConf {
     pub tools: Vec<Tool>,
 }
 
-
 #[derive(Serialize, Debug)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 #[serde(untagged)]
@@ -48,17 +47,17 @@ impl<'de> Deserialize<'de> for InjectConfig {
         match (helper.path, helper.command) {
             (Some(config), None) => Ok(Self::Path {
                 path: config,
-                command: None
+                command: None,
             }),
             (None, Some(cmd)) => Ok(Self::Template {
                 path: None,
-                command: cmd
+                command: cmd,
             }),
             (Some(_), Some(_)) => Err(serde::de::Error::custom(
-                "cannot specify both 'path' and 'command' on config"
+                "cannot specify both 'path' and 'command' on config",
             )),
             (None, None) => Err(serde::de::Error::custom(
-                "must specify either 'path' or 'command' on config"
+                "must specify either 'path' or 'command' on config",
             )),
         }
     }

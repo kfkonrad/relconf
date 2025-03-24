@@ -1,27 +1,27 @@
-use std::path::PathBuf;
 use color_eyre::{
     eyre::{Context, ContextCompat},
     Result,
 };
+use std::path::PathBuf;
 
-pub trait Config: Sized {
-    type Value: Default;
-
+pub trait Config: std::default::Default {
     fn format_name() -> &'static str;
 
-    fn parse_from_str(content: &str) -> Result<Self::Value>;
+    fn parse_from_str(content: &str) -> Result<Self>;
 
-    fn to_string(value: &Self::Value) -> Result<String>;
+    fn to_string(value: &Self) -> Result<String>;
 
-    fn merge(a: &mut Self::Value, b: Self::Value) -> Result<()>;
+    fn merge(a: &mut Self, b: Self) -> Result<()>;
 
-    fn read(path: Option<&PathBuf>, command: Option<String>) -> Result<Self::Value> {
+    fn read(path: Option<&PathBuf>, command: Option<String>) -> Result<Self> {
         let config: String = match (path, command) {
             (Some(p), None) => crate::path::read(p)?,
             (None, Some(command)) => crate::path::run_command(&command)?,
             // if the validation works correctly, these match-branches will be unreachable
             (None, None) => unreachable!("must specify either 'path' or 'command' on config"),
-            (Some(_), Some(_)) => unreachable!("cannot specify both 'path' and 'command' on config")
+            (Some(_), Some(_)) => {
+                unreachable!("cannot specify both 'path' and 'command' on config")
+            }
         };
         Self::parse_from_str(&config).wrap_err(format!(
             "could not parse file {path:#?} as {}",
@@ -29,12 +29,13 @@ pub trait Config: Sized {
         ))
     }
 
-    fn write(path: &PathBuf, value: &Self::Value) -> Result<()> {
+    fn write(path: &PathBuf, value: &Self) -> Result<()> {
         let path = crate::path::permissive_normalize(path);
         let parent = path
             .parent()
             .wrap_err(format!("unable to determine parent of {path:#?}"))?;
-        std::fs::create_dir_all(parent).wrap_err(format!("failed to create directory {parent:#?}"))?;
+        std::fs::create_dir_all(parent)
+            .wrap_err(format!("failed to create directory {parent:#?}"))?;
         std::fs::write(
             &path,
             Self::to_string(value).wrap_err(format!(
@@ -45,7 +46,7 @@ pub trait Config: Sized {
         .wrap_err(format!("unable to write merged config to {path:#?}"))
     }
 
-    fn perform_injection(inject: crate::conf::Inject, config: &Self::Value) -> Result<()> {
+    fn perform_injection(inject: crate::conf::Inject, config: &Self) -> Result<()> {
         Self::write(&inject.path, config)?;
         if let Some(env_name) = inject.env_name {
             println!(
@@ -58,16 +59,22 @@ pub trait Config: Sized {
     }
 
     fn handle_tool(tool: crate::conf::Tool) -> Result<()> {
-        let mut merged_config: Self::Value = Self::Value::default();
+        let mut merged_config: Self = Self::default();
         for config in tool.configs {
             if crate::tool::should_run(&config)? {
-                let additional_config: Self::Value = match &config.config {
-                    crate::conf::InjectConfig::Path {path, ..} => Self::read(Some(&path.0.clone()), None),
-                    crate::conf::InjectConfig::Template {command, ..} => Self::read(None, Some(command.into())),
+                let additional_config: Self = match &config.config {
+                    crate::conf::InjectConfig::Path { path, .. } => {
+                        Self::read(Some(&path.0.clone()), None)
+                    }
+                    crate::conf::InjectConfig::Template { command, .. } => {
+                        Self::read(None, Some(command.into()))
+                    }
                 }?;
                 let stringified_config: String = match &config.config {
-                    crate::conf::InjectConfig::Path {path, ..} => crate::path::normalize(&path.0)?.to_string_lossy().into(),
-                    crate::conf::InjectConfig::Template {command, ..} => command.into(),
+                    crate::conf::InjectConfig::Path { path, .. } => {
+                        crate::path::normalize(&path.0)?.to_string_lossy().into()
+                    }
+                    crate::conf::InjectConfig::Template { command, .. } => command.into(),
                 };
 
                 Self::merge(&mut merged_config, additional_config).map_err(|e| {
@@ -85,68 +92,60 @@ pub trait Config: Sized {
     }
 }
 
-pub struct Toml;
-
-impl Config for Toml {
-    type Value = toml::Table;
-
+impl Config for toml::Table {
     fn format_name() -> &'static str {
         "toml"
     }
 
-    fn parse_from_str(content: &str) -> Result<Self::Value> {
+    fn parse_from_str(content: &str) -> Result<Self> {
         toml::from_str(content).map_err(|e| color_eyre::eyre::eyre!("Error parsing TOML: {}", e))
     }
 
-    fn to_string(value: &Self::Value) -> Result<String> {
-        Ok(toml::Table::to_string(value))
+    fn to_string(value: &Self) -> Result<String> {
+        Ok(ToString::to_string(value))
     }
 
-    fn merge(a: &mut Self::Value, b: Self::Value) -> Result<()> {
+    fn merge(a: &mut Self, b: Self) -> Result<()> {
         crate::merge::toml(a, b)
     }
 }
 
-pub struct Yaml;
-
-impl Config for Yaml {
-    type Value = serde_yaml::Value;
-
+impl Config for serde_yaml::Value {
     fn format_name() -> &'static str {
         "yaml"
     }
 
-    fn parse_from_str(content: &str) -> Result<Self::Value> {
-        serde_yaml::from_str(content).map_err(|e| color_eyre::eyre::eyre!("Error parsing YAML: {}", e))
+    fn parse_from_str(content: &str) -> Result<Self> {
+        serde_yaml::from_str(content)
+            .map_err(|e| color_eyre::eyre::eyre!("Error parsing YAML: {}", e))
     }
 
-    fn to_string(value: &Self::Value) -> Result<String> {
-        serde_yaml::to_string(value).map_err(|e| color_eyre::eyre::eyre!("Error serializing YAML: {}", e))
+    fn to_string(value: &Self) -> Result<String> {
+        serde_yaml::to_string(value)
+            .map_err(|e| color_eyre::eyre::eyre!("Error serializing YAML: {}", e))
     }
 
-    fn merge(a: &mut Self::Value, b: Self::Value) -> Result<()> {
+    fn merge(a: &mut Self, b: Self) -> Result<()> {
         crate::merge::yaml(a, b)
     }
 }
 
-pub struct Json;
-
-impl Config for Json {
-    type Value = serde_json::Value;
-
+impl Config for serde_json::Value {
     fn format_name() -> &'static str {
         "json"
     }
 
-    fn parse_from_str(content: &str) -> Result<Self::Value> {
-        serde_json::from_str(content).map_err(|e| color_eyre::eyre::eyre!("Error parsing JSON: {}", e))
+    fn parse_from_str(content: &str) -> Result<Self> {
+        serde_json::from_str(content)
+            .map_err(|e| color_eyre::eyre::eyre!("Error parsing JSON: {}", e))
     }
 
-    fn to_string(value: &Self::Value) -> Result<String> {
-        serde_json::to_string(value).map_err(|e| color_eyre::eyre::eyre!("Error serializing JSON: {}", e))
+    fn to_string(value: &Self) -> Result<String> {
+        serde_json::to_string(value)
+            .map_err(|e| color_eyre::eyre::eyre!("Error serializing JSON: {}", e))
     }
 
-    fn merge(a: &mut Self::Value, b: Self::Value) -> Result<()> {
+    fn merge(a: &mut Self, b: Self) -> Result<()> {
         crate::merge::json(a, b)
     }
 }
