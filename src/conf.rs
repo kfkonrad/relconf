@@ -46,11 +46,11 @@ impl<'de> Deserialize<'de> for InjectConfig {
         let helper = Helper::deserialize(deserializer)?;
 
         match (helper.path, helper.command) {
-            (Some(config), None) => Ok(InjectConfig::Path {
+            (Some(config), None) => Ok(Self::Path {
                 path: config,
                 command: None
             }),
-            (None, Some(cmd)) => Ok(InjectConfig::Template {
+            (None, Some(cmd)) => Ok(Self::Template {
                 path: None,
                 command: cmd
             }),

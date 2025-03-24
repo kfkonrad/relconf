@@ -3,6 +3,7 @@ use std::{collections::HashSet, path::PathBuf};
 use tool::handle;
 
 mod conf;
+mod format;
 mod merge;
 mod path;
 mod tool;
