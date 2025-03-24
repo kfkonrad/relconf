@@ -1,6 +1,6 @@
 [package]
 name = "relconf"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 license = "MIT"
 description = "Manage configuration depending to the current path"
@@ -17,7 +17,7 @@ schemars = { version = "0.8.22", optional = true }
 serde = { version = "1.0.219", features = ["derive"] }
 serde-toml-merge = "0.3.8"
 serde_json = "1.0.140"
-serde_yaml = "0.9.34+deprecated"
+serde_yaml = "0.9.34"
 shellexpand = { version = "3.1.0", features = ["path"] }
 toml = "0.8.20"
 
