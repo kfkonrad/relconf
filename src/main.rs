@@ -8,7 +8,7 @@ mod merge;
 mod path;
 mod tool;
 
-use clap::Parser;
+use clap::{Parser, crate_version};
 
 use color_eyre::{
     eyre::{eyre, Context, Ok, OptionExt},
@@ -18,7 +18,7 @@ use color_eyre::{
 #[derive(Parser)]
 #[command(name = "relconf")]
 #[command(author = "Kevin F. Konrad")]
-#[command(version = "0.1")]
+#[command(version = crate_version!())]
 #[command(about = "Generate config files depending on the current path", long_about = None)]
 #[command(disable_version_flag = true)]
 struct Cli {

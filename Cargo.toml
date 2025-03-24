@@ -10,7 +10,7 @@ readme = "README.md"
 categories = ["command-line-utilities"]
 
 [dependencies]
-clap = { version = "4.5.32", features = ["derive"] }
+clap = { version = "4.5.32", features = ["cargo", "derive"] }
 color-eyre = "0.6.3"
 dirs = "6.0.0"
 schemars = { version = "0.8.22", optional = true }
