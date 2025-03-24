@@ -116,9 +116,10 @@ The output to stdout made by `relconf` is safe to `source` in Bash, ZSH (and oth
 This makes it easy to automatically set the appropriate configuration variable like the snippets in the
 [section above](#relconf-in-practice) do.
 
-There's also a JSON Schema for the `relconf` config format available in [/assets/relconf.schema.json].
+There's also a JSON Schema for the `relconf` config format available in
+[assets/relconf.schema.json](assets/relconf.schema.json).
 
-### Using templating to generate config file
+### Using templating to generate config files
 
 `relconf` can optionally run arbitrary programs on any templated input config file to auto-generate the config. Your
 specified command should print the config to stdout.
@@ -130,6 +131,14 @@ tools:
   inject:
     - path: ~/.config/jj/always.toml
     - command: sh ~/.config/jj/foo.toml.sh # reminder: path and command are mutually exclusive
+```
+
+The following is an example of a simple template that will generate valid toml when run with `sh`:
+
+```sh
+cat <<EOF
+current-date = "$(date +%Y-%m-%d)"
+EOF
 ```
 
 ### Config file location
@@ -145,7 +154,7 @@ See the table below for an overview. Note that only Linux, macOS and Windows are
 
 You can override the default location by setting `RELCONF_CONFIG` or by using `relconf -c path/to/config.yaml`.
 
-### generting the schema
+### generating the schema
 
 To generate the schema, `relconf` needs to be built with the `schema` feature enabled. You can enable the feature and
 generate the schema like so:

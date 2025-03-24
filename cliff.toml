@@ -39,11 +39,11 @@ filter_unconventional = false
 split_commits = false
 # regex for parsing and grouping commits
 commit_parsers = [
-    { message = "^(add|genericize|implement)", group = "Features" },
+    { message = "(^(add|genericize|implement)|.*add.*)", group = "Features" },
     { message = "^(fix|allow)", group = "Bug Fixes" },
     { message = "^doc", group = "Documentation" },
     { message = "^perf", group = "Performance" },
-    { message = "(^(refactor|rename|switch)|fmt|format)", group = "Refactor" },
+    { message = "(^(refactor|rename|switch|replace|remove)|fmt|format)", group = "Refactor" },
     { message = "^style", group = "Styling" },
     { message = "^test", group = "Testing" },
     { message = "^chore\\(release\\): prepare for", skip = true },

@@ -431,7 +431,7 @@ checksum = "38caf58cc5ef2fed281f89292ef23f6365465ed9a41b7a7754eb4e26496c92df"
 
 [[package]]
 name = "relconf"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "clap",
  "color-eyre",
