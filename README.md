@@ -57,7 +57,7 @@ relconf -o foo,bar
 ## `relconf` in practice
 
 Relconf will not run automatically. I recommend writing a wrapper around tools that use `relconf` to manage their
-configuration like so and adding the wrapper to your `.bashrc`/`.zshrc`/`config.fish` (or similar).
+configuration like so and adding the wrapper to your `.bashrc`/`.zshrc`/`config.fish`/`config.nu` (or similar).
 
 - Bash/ZSH:
 
@@ -78,6 +78,29 @@ configuration like so and adding the wrapper to your `.bashrc`/`.zshrc`/`config.
     relconf -o foo | source
     command foo $argv
   end
+  ```
+
+- Nushell:
+
+  Since Nushell doesn't support loading environment variables with `export` you'll have to provide a conversion function
+  like `posix-exports-to-env` below.
+
+  ```sh
+  def --env posix-exports-to-env [] {
+    each { |line|
+      $line
+      | str trim
+      | parse 'export {key}="{value}"'
+      | transpose -rd
+    }
+    | into record
+    | load-env
+  }
+
+  def --wrapped --env foo [...rest] {
+    relconf -o foo | posix-exports-to-env
+    ^foo ...$rest
+  }
   ```
 
 Set up like this `relconf` will always run before the command `foo` gets executed, ensuring the configuration is
