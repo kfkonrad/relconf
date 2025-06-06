@@ -77,123 +77,106 @@ fn serialize_yaml_value_to_format(value: &serde_yaml::Value, format: DetectedFor
     }
 }
 
-pub trait Config: std::default::Default {
-    fn format_name() -> &'static str;
-
-    fn parse_from_str(content: &str) -> Result<Self>;
-
-    fn to_string(value: &Self) -> Result<String>;
-
-    fn to_string_with_path(value: &Self, _path: &PathBuf) -> Result<String> {
-        Self::to_string(value)
-    }
-
-    fn merge(a: &mut Self, b: Self) -> Result<()>;
-
-    fn read(path: Option<&PathBuf>, command: Option<String>) -> Result<Self> {
-        let config: String = match (path, command) {
-            (Some(p), None) => crate::path::read(p)?,
-            (None, Some(command)) => crate::path::run_command(&command)?,
-            // if the validation works correctly, these match-branches will be unreachable
-            (None, None) => unreachable!("must specify either 'path' or 'command' on config"),
-            (Some(_), Some(_)) => {
-                unreachable!("cannot specify both 'path' and 'command' on config")
-            }
-        };
-        Self::parse_from_str(&config).wrap_err(format!(
-            "could not parse file {path:#?} as {}",
-            Self::format_name()
-        ))
-    }
-
-    fn write(path: &PathBuf, value: &Self) -> Result<()> {
-        let path = crate::path::permissive_normalize(path);
-        let parent = path
-            .parent()
-            .wrap_err(format!("unable to determine parent of {path:#?}"))?;
-        std::fs::create_dir_all(parent)
-            .wrap_err(format!("failed to create directory {parent:#?}"))?;
-        std::fs::write(
-            &path,
-            Self::to_string_with_path(value, &path).wrap_err(format!(
-                "unable to serialize and write merged {} to {path:#?}",
-                Self::format_name()
-            ))?,
-        )
-        .wrap_err(format!("unable to write merged config to {path:#?}"))
-    }
-
-    fn perform_injection(inject: crate::conf::Inject, config: &Self) -> Result<()> {
-        Self::write(&inject.path, config)?;
-        if let Some(env_name) = inject.env_name {
-            println!(
-                "export {}={:#?}",
-                env_name,
-                crate::path::normalize(&inject.path)?.to_string_lossy()
-            );
+fn parse_from_str_with_path(content: &str, path: Option<&PathBuf>) -> Result<serde_yaml::Value> {
+    let format = if let Some(p) = path {
+        if let Some(ext_format) = detect_format_from_extension(p) {
+            ext_format
+        } else {
+            detect_format_from_content(content)?
         }
-        Ok(())
-    }
+    } else {
+        detect_format_from_content(content)?
+    };
 
-    fn handle_tool(tool: crate::conf::Tool) -> Result<()> {
-        let mut merged_config: Self = Self::default();
-        for config in tool.configs {
-            if crate::tool::should_run(&config)? {
-                let additional_config: Self = match &config.config {
-                    crate::conf::InjectConfig::Path { path, .. } => {
-                        Self::read(Some(&path.0.clone()), None)
-                    }
-                    crate::conf::InjectConfig::Template { command, .. } => {
-                        Self::read(None, Some(command.into()))
-                    }
-                }?;
-                let stringified_config: String = match &config.config {
-                    crate::conf::InjectConfig::Path { path, .. } => {
-                        crate::path::normalize(&path.0)?.to_string_lossy().into()
-                    }
-                    crate::conf::InjectConfig::Template { command, .. } => command.into(),
-                };
+    parse_content_to_yaml_value(content, format)
+}
 
-                Self::merge(&mut merged_config, additional_config).map_err(|e| {
-                    color_eyre::eyre::eyre!(format!(
-                        "unable to merge config from {:#?} for tool {}: {e}",
-                        stringified_config, tool.name
-                    ))
-                })?;
-            }
-        }
-        for inject in tool.inject {
-            Self::perform_injection(inject, &merged_config)?;
-        }
-        Ok(())
+fn to_string_with_path(value: &serde_yaml::Value, path: &PathBuf) -> Result<String> {
+    if let Some(format) = detect_format_from_extension(path) {
+        serialize_yaml_value_to_format(value, format)
+    } else {
+        eprintln!("Warning: Unable to determine format from file extension for {}, defaulting to JSON", path.display());
+        serialize_yaml_value_to_format(value, DetectedFormat::Json)
     }
 }
 
-impl Config for serde_yaml::Value {
-    fn format_name() -> &'static str {
-        "unified config"
-    }
+pub fn read(path: Option<&PathBuf>, command: Option<String>) -> Result<serde_yaml::Value> {
+    let config: String = match (&path, &command) {
+        (Some(p), None) => crate::path::read(p)?,
+        (None, Some(command)) => crate::path::run_command(command)?,
+        // if the validation works correctly, these match-branches will be unreachable
+        (None, None) => unreachable!("must specify either 'path' or 'command' on config"),
+        (Some(_), Some(_)) => {
+            unreachable!("cannot specify both 'path' and 'command' on config")
+        }
+    };
 
-    fn parse_from_str(content: &str) -> Result<Self> {
-        let format = detect_format_from_content(content)?;
-        parse_content_to_yaml_value(content, format)
-    }
+    match (path, command) {
+        (Some(p), None) => parse_from_str_with_path(&config, Some(p)),
+        (None, Some(_)) => parse_from_str_with_path(&config, None),
+        _ => unreachable!(),
+    }.wrap_err(format!(
+        "could not parse file {path:#?}"
+    ))
+}
 
-    fn to_string(value: &Self) -> Result<String> {
-        serde_yaml::to_string(value)
-            .map_err(|e| color_eyre::eyre::eyre!("Error serializing YAML: {}", e))
-    }
+pub fn write(path: &PathBuf, value: &serde_yaml::Value) -> Result<()> {
+    let path = crate::path::permissive_normalize(path);
+    let parent = path
+        .parent()
+        .wrap_err(format!("unable to determine parent of {path:#?}"))?;
+    std::fs::create_dir_all(parent)
+        .wrap_err(format!("failed to create directory {parent:#?}"))?;
+    std::fs::write(
+        &path,
+        to_string_with_path(value, &path).wrap_err(format!(
+            "unable to serialize and write merged unified config to {path:#?}"
+        ))?,
+    )
+    .wrap_err(format!("unable to write merged config to {path:#?}"))
+}
 
-    fn to_string_with_path(value: &Self, path: &PathBuf) -> Result<String> {
-        if let Some(format) = detect_format_from_extension(path) {
-            serialize_yaml_value_to_format(value, format)
-        } else {
-            eprintln!("Warning: Unable to determine format from file extension for {}, defaulting to JSON", path.display());
-            serialize_yaml_value_to_format(value, DetectedFormat::Json)
+pub fn perform_injection(inject: crate::conf::Inject, config: &serde_yaml::Value) -> Result<()> {
+    write(&inject.path, config)?;
+    if let Some(env_name) = inject.env_name {
+        println!(
+            "export {}={:#?}",
+            env_name,
+            crate::path::normalize(&inject.path)?.to_string_lossy()
+        );
+    }
+    Ok(())
+}
+
+pub fn handle_tool(tool: crate::conf::Tool) -> Result<()> {
+    let mut merged_config: serde_yaml::Value = serde_yaml::Value::default();
+    for config in tool.configs {
+        if crate::tool::should_run(&config)? {
+            let additional_config: serde_yaml::Value = match &config.config {
+                crate::conf::InjectConfig::Path { path, .. } => {
+                    read(Some(&path.0.clone()), None)
+                }
+                crate::conf::InjectConfig::Template { command, .. } => {
+                    read(None, Some(command.into()))
+                }
+            }?;
+            let stringified_config: String = match &config.config {
+                crate::conf::InjectConfig::Path { path, .. } => {
+                    crate::path::normalize(&path.0)?.to_string_lossy().into()
+                }
+                crate::conf::InjectConfig::Template { command, .. } => command.into(),
+            };
+
+            crate::merge::yaml(&mut merged_config, additional_config).map_err(|e| {
+                color_eyre::eyre::eyre!(format!(
+                    "unable to merge config from {:#?} for tool {}: {e}",
+                    stringified_config, tool.name
+                ))
+            })?;
         }
     }
-
-    fn merge(a: &mut Self, b: Self) -> Result<()> {
-        crate::merge::yaml(a, b)
+    for inject in tool.inject {
+        perform_injection(inject, &merged_config)?;
     }
+    Ok(())
 }

@@ -1,6 +1,6 @@
 use std::env;
 
-use crate::{conf, format::Config, path};
+use crate::{conf, format, path};
 
 use color_eyre::{
     eyre::{Context, Ok},
@@ -8,7 +8,7 @@ use color_eyre::{
 };
 
 pub fn handle(tool: conf::Tool) -> Result<()> {
-    serde_yaml::Value::handle_tool(tool)
+    format::handle_tool(tool)
 }
 
 pub fn should_run(config: &conf::Config) -> Result<bool> {
