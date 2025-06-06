@@ -1,6 +1,5 @@
-use std::path::{Path, PathBuf};
-
 use shellexpand::path::tilde;
+use std::path::{Path, PathBuf};
 
 use color_eyre::{
     eyre::{Context, Ok},
@@ -11,9 +10,7 @@ pub fn normalize<SP>(path: &SP) -> Result<PathBuf>
 where
     SP: ?Sized + AsRef<Path> + std::fmt::Debug,
 {
-    tilde(path)
-        .canonicalize()
-        .wrap_err(format!("no such path {path:#?}"))
+    dunce::canonicalize(tilde(&path)).wrap_err(format!("no such path {path:#?}"))
 }
 
 // this means the path needn't exist (only existing paths can be canonicalized)
