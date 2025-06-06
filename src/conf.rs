@@ -67,7 +67,6 @@ impl<'de> Deserialize<'de> for InjectConfig {
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct Tool {
     pub name: String,
-    pub format: Format,
     pub inject: Vec<Inject>,
     pub configs: Vec<Config>,
 }
@@ -80,14 +79,6 @@ pub struct Inject {
     pub env_name: Option<String>,
 }
 
-#[derive(Deserialize, Debug)]
-#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
-#[serde(rename_all = "lowercase")]
-pub enum Format {
-    Toml,
-    Yaml,
-    Json,
-}
 
 #[derive(Deserialize, Debug)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]

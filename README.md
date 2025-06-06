@@ -2,11 +2,17 @@
 
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
 
-Manage configuration depending to the current path
+Manage configuration depending on the current path
 
-`relconf` generates toml, yaml and configuration files based on the current path. It reads its configuration from a yaml
-file (see [Usage](#usage) for where that file is expected to be), merges toml/yaml/json files based on the current path,
-writes the final configuration to disk and optionally outputs an environment variable pointing to the generated config.
+## What is relconf?
+
+`relconf` generates TOML, YAML and JSON configuration files based on the current path. It reads its configuration from a
+YAML file (see [Usage](#usage) for where that file is expected to be), merges configuration files based on the current
+path, writes the final configuration to disk and optionally outputs an environment variable pointing to the generated
+config.
+
+This allows you to have different tool configurations automatically applied depending on which directory you're working
+in - perfect for switching between different projects, clients, or environments.
 
 ## Table of Contents
 
@@ -113,7 +119,6 @@ current and appropriate for whatever directory you're running `foo` in.
 ```yaml
 tools:
 - name: jj
-  format: toml # or yaml or json
   inject:
     - env-name: JJ_CONFIG # optional
       path: ~/.config/jj/merged.toml
@@ -127,7 +132,9 @@ tools:
           match-subdirectories: true # optional, defaults to false
 ```
 
-`relconf` preserves the order in which configs are listed and will merge and overwrite values in that order as well.
+`relconf` preserves the order in which configs are listed and will merge and overwrite values in that order as well. You
+can mix and match JSON, TOML and YAML files for both input and output and use commands that output JSON, TOML or YAML
+(relconf will auto-detect the format).
 
 If an injection has the `env-name` key set `relconf` will output something like this (based on the above config):
 
@@ -150,13 +157,12 @@ specified command should print the config to stdout.
 ```yaml
 tools:
 - name: jj
-  format: toml
   inject:
     - path: ~/.config/jj/always.toml
     - command: sh ~/.config/jj/foo.toml.sh # reminder: path and command are mutually exclusive
 ```
 
-The following is an example of a simple template that will generate valid toml when run with `sh`:
+The following is an example of a simple template that will generate valid TOML when run with `sh`:
 
 ```sh
 cat <<EOF
@@ -169,7 +175,7 @@ EOF
 The default location for the config file depends on your operating system.
 See the table below for an overview. Note that only Linux, macOS and Windows are supported.
 
-| OS      | default config path                                                           |
+| OS      | Default config path                                                           |
 |---------|-------------------------------------------------------------------------------|
 | Linux   | `$XDG_CONFIG_HOME/relconf/config.yaml` or `$HOME/.config/relconf/config.yaml` |
 | macOS   | `$HOME/Library/Application Support/relconf/config.yaml`                       |
@@ -177,7 +183,7 @@ See the table below for an overview. Note that only Linux, macOS and Windows are
 
 You can override the default location by setting `RELCONF_CONFIG` or by using `relconf -c path/to/config.yaml`.
 
-### generating the schema
+### Generating the schema
 
 To generate the schema, `relconf` needs to be built with the `schema` feature enabled. You can enable the feature and
 generate the schema like so:

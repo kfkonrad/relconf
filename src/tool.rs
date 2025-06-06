@@ -8,11 +8,7 @@ use color_eyre::{
 };
 
 pub fn handle(tool: conf::Tool) -> Result<()> {
-    match tool.format {
-        conf::Format::Toml => toml::Table::handle_tool(tool),
-        conf::Format::Yaml => serde_yaml::Value::handle_tool(tool),
-        conf::Format::Json => serde_json::Value::handle_tool(tool),
-    }
+    serde_yaml::Value::handle_tool(tool)
 }
 
 pub fn should_run(config: &conf::Config) -> Result<bool> {

@@ -64,14 +64,6 @@
     "FilePath": {
       "type": "string"
     },
-    "Format": {
-      "type": "string",
-      "enum": [
-        "toml",
-        "yaml",
-        "json"
-      ]
-    },
     "Inject": {
       "type": "object",
       "required": [
@@ -93,7 +85,6 @@
       "type": "object",
       "required": [
         "configs",
-        "format",
         "inject",
         "name"
       ],
@@ -103,9 +94,6 @@
           "items": {
             "$ref": "#/definitions/Config"
           }
-        },
-        "format": {
-          "$ref": "#/definitions/Format"
         },
         "inject": {
           "type": "array",
