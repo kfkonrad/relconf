@@ -8,7 +8,7 @@ mod merge;
 mod path;
 mod tool;
 
-use clap::{Parser, crate_version};
+use clap::{crate_version, Parser};
 
 use color_eyre::{
     eyre::{eyre, Context, Ok, OptionExt},

@@ -79,7 +79,6 @@ pub struct Inject {
     pub env_name: Option<String>,
 }
 
-
 #[derive(Deserialize, Debug)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
 pub struct Config {

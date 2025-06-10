@@ -1,7 +1,4 @@
-use color_eyre::{
-    eyre::ContextCompat,
-    Result,
-};
+use color_eyre::{eyre::ContextCompat, Result};
 
 static ERROR_MESSAGE_YAML: &str = "failed merging yaml documents";
 

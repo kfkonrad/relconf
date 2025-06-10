@@ -1,8 +1,8 @@
 use color_eyre::{
-    eyre::{Context, ContextCompat},
+    eyre::{eyre, Context, ContextCompat},
     Result,
 };
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Copy)]
 enum DetectedFormat {
@@ -11,7 +11,7 @@ enum DetectedFormat {
     Toml,
 }
 
-fn detect_format_from_extension(path: &PathBuf) -> Option<DetectedFormat> {
+fn detect_format_from_extension(path: &Path) -> Option<DetectedFormat> {
     path.extension()
         .and_then(|ext| ext.to_str())
         .and_then(|ext| match ext.to_lowercase().as_str() {
@@ -33,45 +33,46 @@ fn detect_format_from_content(content: &str) -> Result<DetectedFormat> {
         return Ok(DetectedFormat::Yaml);
     }
 
-    Err(color_eyre::eyre::eyre!("Unable to parse content as TOML or YAML"))
+    Err(eyre!("Unable to parse content as TOML or YAML"))
 }
 
 fn parse_content_to_yaml_value(content: &str, format: DetectedFormat) -> Result<serde_yaml::Value> {
     match format {
         DetectedFormat::Yaml => {
-            serde_yaml::from_str(content)
-                .map_err(|e| color_eyre::eyre::eyre!("Error parsing YAML: {}", e))
+            serde_yaml::from_str(content).map_err(|e| eyre!("Error parsing YAML: {}", e))
         }
         DetectedFormat::Json => {
-            let json_value: serde_json::Value = serde_json::from_str(content)
-                .map_err(|e| color_eyre::eyre::eyre!("Error parsing JSON: {}", e))?;
+            let json_value: serde_json::Value =
+                serde_json::from_str(content).map_err(|e| eyre!("Error parsing JSON: {}", e))?;
             serde_yaml::to_value(json_value)
-                .map_err(|e| color_eyre::eyre::eyre!("Error converting JSON to YAML: {}", e))
+                .map_err(|e| eyre!("Error converting JSON to YAML: {}", e))
         }
         DetectedFormat::Toml => {
-            let toml_value: toml::Table = toml::from_str(content)
-                .map_err(|e| color_eyre::eyre::eyre!("Error parsing TOML: {}", e))?;
+            let toml_value: toml::Table =
+                toml::from_str(content).map_err(|e| eyre!("Error parsing TOML: {}", e))?;
             serde_yaml::to_value(toml_value)
-                .map_err(|e| color_eyre::eyre::eyre!("Error converting TOML to YAML: {}", e))
+                .map_err(|e| eyre!("Error converting TOML to YAML: {}", e))
         }
     }
 }
 
-fn serialize_yaml_value_to_format(value: &serde_yaml::Value, format: DetectedFormat) -> Result<String> {
+fn serialize_yaml_value_to_format(
+    value: &serde_yaml::Value,
+    format: DetectedFormat,
+) -> Result<String> {
     match format {
         DetectedFormat::Yaml => {
-            serde_yaml::to_string(value)
-                .map_err(|e| color_eyre::eyre::eyre!("Error serializing YAML: {}", e))
+            serde_yaml::to_string(value).map_err(|e| eyre!("Error serializing YAML: {}", e))
         }
         DetectedFormat::Json => {
             let json_value: serde_json::Value = serde_yaml::from_value(value.clone())
-                .map_err(|e| color_eyre::eyre::eyre!("Error converting YAML to JSON: {}", e))?;
+                .map_err(|e| eyre!("Error converting YAML to JSON: {}", e))?;
             serde_json::to_string_pretty(&json_value)
-                .map_err(|e| color_eyre::eyre::eyre!("Error serializing JSON: {}", e))
+                .map_err(|e| eyre!("Error serializing JSON: {}", e))
         }
         DetectedFormat::Toml => {
             let toml_value: toml::Table = serde_yaml::from_value(serde_yaml::to_value(value)?)
-                .map_err(|e| color_eyre::eyre::eyre!("Error converting YAML to TOML: {}", e))?;
+                .map_err(|e| eyre!("Error converting YAML to TOML: {}", e))?;
             Ok(toml_value.to_string())
         }
     }
@@ -91,13 +92,14 @@ fn parse_from_str_with_path(content: &str, path: Option<&PathBuf>) -> Result<ser
     parse_content_to_yaml_value(content, format)
 }
 
-fn to_string_with_path(value: &serde_yaml::Value, path: &PathBuf) -> Result<String> {
-    if let Some(format) = detect_format_from_extension(path) {
-        serialize_yaml_value_to_format(value, format)
-    } else {
-        eprintln!("Warning: Unable to determine format from file extension for {}, defaulting to JSON", path.display());
+fn to_string_with_path(value: &serde_yaml::Value, path: &Path) -> Result<String> {
+    detect_format_from_extension(path).map_or_else(|| {
+        eprintln!(
+            "Warning: Unable to determine format from file extension for {}, defaulting to JSON",
+            path.display()
+        );
         serialize_yaml_value_to_format(value, DetectedFormat::Json)
-    }
+    }, |format| serialize_yaml_value_to_format(value, format))
 }
 
 pub fn read(path: Option<&PathBuf>, command: Option<String>) -> Result<serde_yaml::Value> {
@@ -115,9 +117,8 @@ pub fn read(path: Option<&PathBuf>, command: Option<String>) -> Result<serde_yam
         (Some(p), None) => parse_from_str_with_path(&config, Some(p)),
         (None, Some(_)) => parse_from_str_with_path(&config, None),
         _ => unreachable!(),
-    }.wrap_err(format!(
-        "could not parse file {path:#?}"
-    ))
+    }
+    .wrap_err(format!("could not parse file {path:#?}"))
 }
 
 pub fn write(path: &PathBuf, value: &serde_yaml::Value) -> Result<()> {
@@ -125,8 +126,7 @@ pub fn write(path: &PathBuf, value: &serde_yaml::Value) -> Result<()> {
     let parent = path
         .parent()
         .wrap_err(format!("unable to determine parent of {path:#?}"))?;
-    std::fs::create_dir_all(parent)
-        .wrap_err(format!("failed to create directory {parent:#?}"))?;
+    std::fs::create_dir_all(parent).wrap_err(format!("failed to create directory {parent:#?}"))?;
     std::fs::write(
         &path,
         to_string_with_path(value, &path).wrap_err(format!(
@@ -153,9 +153,7 @@ pub fn handle_tool(tool: crate::conf::Tool) -> Result<()> {
     for config in tool.configs {
         if crate::tool::should_run(&config)? {
             let additional_config: serde_yaml::Value = match &config.config {
-                crate::conf::InjectConfig::Path { path, .. } => {
-                    read(Some(&path.0.clone()), None)
-                }
+                crate::conf::InjectConfig::Path { path, .. } => read(Some(&path.0.clone()), None),
                 crate::conf::InjectConfig::Template { command, .. } => {
                     read(None, Some(command.into()))
                 }
@@ -168,7 +166,7 @@ pub fn handle_tool(tool: crate::conf::Tool) -> Result<()> {
             };
 
             crate::merge::yaml(&mut merged_config, additional_config).map_err(|e| {
-                color_eyre::eyre::eyre!(format!(
+                eyre!(format!(
                     "unable to merge config from {:#?} for tool {}: {e}",
                     stringified_config, tool.name
                 ))
